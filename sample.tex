@@ -1,0 +1,512 @@
+\documentclass[twoside,11pt]{article}
+
+% Any additional packages needed should be included after jmlr2e.
+% Note that jmlr2e.sty includes epsfig, amssymb, natbib and graphicx,
+% and defines many common macros, such as 'proof' and 'example'.
+%
+% It also sets the bibliographystyle to plainnat; for more information on
+% natbib citation styles, see the natbib documentation, a copy of which
+% is archived at http://www.jmlr.org/format/natbib.pdf
+
+\usepackage{jmlr2e}
+
+% Definitions of handy macros can go here
+
+\newcommand{\dataset}{{\cal D}}
+\newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
+
+\newcommand\indep{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern3mu{#1#2}}}
+
+\newcommand{\A}{\textbf{A}}
+\newcommand{\B}{\textbf{B}}
+\newcommand{\C}{\textbf{C}}
+\newcommand{\X}{\textbf{X}}
+\newcommand{\Y}{\textbf{Y}}
+\newcommand{\N}{\textbf{N}}
+\newcommand{\V}{\textbf{V}}
+\newcommand{\Q}{\textbf{Q}}
+\newcommand{\R}{\textbf{R}}
+\newcommand{\s}{\textbf{S}}
+\newcommand{\p}{\textbf{P}}
+\newcommand{\W}{\textbf{W}}
+\newcommand{\Z}{\textbf{Z}}
+\newcommand{\D}{\textbf{D}}
+\newcommand{\e}{\textbf{E}}
+\newcommand{\T}{\textbf{T}}
+
+\usepackage{bbm}
+\usepackage{amssymb}
+\usepackage{bbm}
+\usepackage{amsmath}
+% \usepackage{float}
+\usepackage{enumerate}
+
+\usepackage{mathrsfs}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+\newcommand*\by{{\times}}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\usepackage{tikz}
+\usetikzlibrary {positioning}
+\definecolor {processblue}{cmyk}{0.96,0,0,0}
+
+\ShortHeadings{Johnson-Lindestrauss Lemma and Restricted Isometry Property}{Grigor Keropyan, TUM}
+\firstpageno{1}
+
+\begin{document}
+
+\title{Johnson-Lindestrauss Lemma and Restricted Isometry Property}
+
+\author{\name Grigor Keropyan \email grigorkeropyan@gmail.com \\
+      \addr Department of Mathematics\\
+      Seminar of Foundations in Data Analysis (Prof. Dr. Massimo Fornasier, PD Dr. Peter Massopust) \\
+      Technische Universität München\\
+      München, Germany
+    }
+
+\maketitle
+
+\begin{abstract}
+This report aims to to explore connection between Johnson-Lindenstrauss Lemma and Restricted Isometry Property based on the existing research in that area. The key connection point of both of them is concentration inequality. On the one hand Johnson-Lindenstrauss Lemma implies Restricted Isometry Property through concentration inequality and the latter implies the former that 
+is optimal up to a logarithmic factors.  \\
+\end{abstract} 
+
+\begin{keywords}
+  Johnson-Lindenstrauss Lemma, Restricted Isometry Property, Concentration Inequalities
+\end{keywords}
+
+\section{Introduction}
+
+In this report we are exploring the connection between Johnson-Lindenstrauss (JL) Lemma and Restricted Isometry Property (RIP). \\
+
+JL lemma is about mapping from a high dimensional space onto lower dimensional one while keeping the distances between points almost the same. For more precise definition please refer to the section 2 and 3. JL lemma provides some kind of dimensionality reduction and the property that keeping the relative distances the same is a desired property as one can refer to the mapped points almost the same as in in higher dimension. Moreover, it turns out that constructing such kind of embeddings is tractable in practice and lately even more efficient constructions have been explored \citep{Khramer}. \\
+
+On the other hand RIP provides the mapping for every point in high dimensional space onto lower one by keeping the norm almost the same, but only for the case when these points are sparse. The word sparse here means most of the entries of the vector are zero. This has various applications as in practice observing high dimensional signals they actually are in lower dimensional in a sense that they are sparse, in particular in signal processing. 
+
+
+Note that what follows mostly based on the research papers \citep{isometry} and \citep{Khramer}. 
+
+
+\section{Basic Notations and Definitions}
+Throughout the work following notations are used. If $A$ is any, we denote $\#A$ number of points in it.  Let $N$ is a natural number in $\mathbb{N}$ and $x = (x_1, \dots, x_N)^T \in \mathbb{R}^N$ is a column vector. The $\ell_p$-norm of a vector $x$ is denoted by
+$$
+\norm{x}_2 := (\sum_{j=1}^{N}|x_j|^p)^{1/p}, \quad \forall p \in [1, \infty) \text{ and }
+\norm{x}_{\infty} := max_{j=1, \dots, N}|x_j|. 
+$$
+For $m, N \in \mathbb{N}$ and a matrix $\Phi = (\Phi_{j,l}) \in \mathbb{R}^{m \by N}$, its operator norm is defined as 
+$$
+\norm{\Phi} := sup_{\norm{x}_2 = 1}\norm{\Phi(x)}_2
+$$
+and the Frobenius norm as 
+$$
+\norm{\Phi}_{\mathcal{F}} := (\sum_{j=1}^{m} \sum_{l=1}^{N} |\Phi_{j,l}|^2)^{1/2}.
+$$
+
+Matrix $\Phi$ is called \textbf{random} if entries are random samples from certain distribution which will be specified. We say a vector $x \in \mathbb{R}^N$ is $k$-\textbf{sparse} if it has at most $k$ non-zero entries. Furthermore, given a set of indices $T$ with $\#T \leq k$, denote by $X_T$ the set of all $k$-sparse vectors in $\mathbb{R}^N$ that have zero entries outside of $T$. Evidently, the definition of $X_T$ implies that it is $k$-dimensional subspace of $\mathbb{R}^N$. Given a index set $T$ and matrix $\Phi$ we denote by $\Phi_{(T)}$ matrix consisting of the columns in $\Phi$ which are in index set $T$. For $j \in [N]$ $\Phi_j$ denotes the $j$th column of the matrix and the $\Phi^*$ is a  transpose of the matrix. Upper integer part of real number $x$ is denoted by $\ceil{x}$, which is the smallest integer number that is not less than $x$. Suppose $N \in \mathbb{N}$ and $s$ is much less than $N$, denote $R := \ceil{N/s}$. Decomposition of vector $x = (x_1, x_2, \dots, x_N) \in  \mathbb{R}^N$ into blocks is denoted by $(x_{(1)}, x_{(2)}, \dots, x_{(R)})$, where blocks have size $s$ i.e., $x_{(J)} \in \mathbb{R}^s$ $\forall J \in [R-1]$, only the last block can have different dimension in order that sum of dimensions be $N$. In order to separate only first block from the others $x = (x_{(1)}, x_{(-1)})$ is denoted, where $x_{(-1)} = (x_{(2)}, \dots, x_{(R)})) \in \mathbb{R}^{N-s}$. For the set of indices in $J$th block we write $[Jth]$ and for $j,l \in [N]$ we write $j \sim l$ if they are in the same block and $j \not \sim l$ otherwise. For constructing diagonal matrix which has elements as given vector $x \in \mathbb{R}^N$ is denoted by $D_x \in \mathbb{R}^{N \by N}$, where $D_{j,j} = x_j$ and $D_{i,j} = 0$ for all $i,j \in [N]$ and $i \not = j$. For the vector $x = (x_1, x_2, \dots, x_N) \in \mathbb{R}^N$ we say $x$ is in \textbf{decreasing arrangement} if $|x_i| \geq |x_j|$ for all $i < j$ and $i, j \in [N]$. \\
+
+\noindent
+{\bf Definition 1} \\
+{\it We call $\xi \in \mathbb{R}^N$ as a Rademacher sequence if it is uniformly distributed on $\{-1, +1\}^N$, where $N \in \mathbb{N}$. } \\
+
+\noindent
+{\bf Definition 2} \\
+{\it Let $\Phi \in \mathbb{R}^{n \by N}$ be a random matrix and for any $x \in \mathbb{R}^N$ expectation of random variable $\norm{\Phi(x)}_2^2$ is $\norm{x}_2^2$, that is 
+$$
+\mathbb{E}[\norm{\Phi(x)}_2^2] = \norm{x}_2^2,
+$$
+where $n, N \in \mathbb{N}$. We say that random matrix $\Phi$ satisfies concentration inequality if the random variable $\norm{\Phi(x)}_2^2$ is strongly concentrated about its expected value, that is
+$$
+\mathbb{P}(|\norm{\Phi(x)}_2^2 - \norm{x}_2^2| \geq \epsilon\norm{x}_2^2) \leq 2e^{-nc(\epsilon)}, \quad 0 \le \epsilon \le 1, 
+$$
+where $\epsilon$ is a constant and $c(\epsilon)$ is also a constant depends only on $\epsilon$ such that for all $\epsilon \in (0, 1)$, $c(\epsilon) \ge 0$.
+} \\
+
+\noindent
+{\bf Definition 3} \\
+{\it
+We say that a matrix $\Phi$ satisfies Restricted Isometry Property (RIP) of order $k$ and level $\delta \in (0, 1)$ (concisely, $(k, \delta)-RIP$) if 
+\begin{equation}
+\label{eqn:rip}
+    (1-\delta) \norm{x}_2^2 \leq \norm{\Phi(x)}_2^2 \leq (1+\delta) \norm{x}_2^2 \quad \forall k-\text{sparse } x \in \mathbb{R}^N.
+\end{equation}
+The restricted isometry constant $\delta_k$ is defined as the smallest value of $\delta$ for which (\ref{eqn:rip}) holds.
+}
+
+\section{Connection Between JL Lemma and RIP}
+Before stating the Johnson-Lindenstrauss (JL) Lemma and its connection to RIP, let us understand what is the main idea of JL Lemma. Suppose a set of point cloud $\mathcal{Q}$ in $\mathbb{R}^N$ is given with $N$ is large. So, working with this point cloud could be challenging due to curse of dimensionality. In order to address this problem many techniques of dimensionality reduction have been discovered so far i.e., Principal Component Analysis (PCA), Autoencoder in deep learning, Non-negative Matrix Factorization (NMF) etc. It is also clear that all of the dimensionality reduction methods should through away some information about data. That is why addressing the problem can be done keeping the information that is needed. The idea of JL lemma is to embed this points into a lower-dimensional Euclidean space $\mathbb{R}^n$ in a way that relative distances between points are almost preserved and how small $n$ can be relative to $\#\mathcal{Q}$. The following is the original formulation in \citep{jl}. \\
+
+\noindent
+{\bf Lemma 4} (Johnson-Lindenstrauss) (Lemma 4.1 in \citep{isometry}) \\
+{\it
+Let $\epsilon \in (0, 1)$ is given and $N \in \mathbb{N}$. For every set $\mathcal{Q} \in \mathbb{R}^N$, if $n$ is a positive integer such that $n \ge n_0 := O(ln(\#\mathcal{Q})/\epsilon^2)$, there exists a Lipschtz mapping $f : \mathbb{R}^N \rightarrow \mathbb{R}^n$ such that 
+\begin{equation}
+\label{eqn:jl}
+(1 - \epsilon) \norm{u - v}_2^2 \leq \norm{f(u) - f(v)}_2^2 \leq (1 + \epsilon) \norm{u - v}_2^2,
+\end{equation}
+for all $u, v \in \mathcal{Q}$.
+}\\
+
+During the last three decades various forms and easier proofs have been explored for this lemma \citep{jl1, jl2, jl3}. Particularly, in order to be able to use the lemma in practice researchers explored various methods of constructing such mappings. It turns out that mapping is possible to choose linear, which is already beneficial as it is easy and requires low complexity to work with linear functions. For the linear mapping case function $f$ can be represented by $n \by N$ matrix $\Phi$. Using the linearity of the mapping the equation \ref{eqn:jl} becomes
+$$
+(1 - \epsilon) \norm{u - v}_2^2 \leq \norm{\Phi(u-v)}_2^2 \leq (1 + \epsilon) \norm{u - v}_2^2, \quad \forall u, v \in \mathcal{Q}.
+$$
+Now, if we denote all differences of the points in the set $\mathcal{Q}$ by $D := \{u-v\}$ for all $u,v \in \mathcal{Q}$ such that $u \not = v$ the above equation is equivalent to 
+\begin{equation}
+\label{eqn:jl_diff}    
+(1 - \epsilon) \norm{y}_2^2 \leq \norm{\Phi(y)}_2^2 \leq (1 + \epsilon) \norm{y}_2^2, \quad \forall y \in D.
+\end{equation}
+In such a setting finding a deterministic matrix could be challenging. However, random matrices provide tractable way to face this problem. Indeed, when $\Phi$ is a random matrix, the equation \ref{eqn:jl_diff} holds with high probability if the matrix satisfies concentration inequality, that is
+$$
+\mathbb{P}(|\norm{\Phi(x)}_2^2 - \norm{x}_2^2| \geq \epsilon\norm{x}_2^2) \leq 2e^{-nc(\epsilon)}, \quad 0 \le \epsilon \le 1. 
+$$
+From the above discussion we understand that the key point for proving JL Lemma is to find a random matrix which satisfies concentration inequality. Later in this section is showed how RIP and JL Lemma are connected through this inequality, until then it is worth to mention few examples satisfying concentration inequality that are well known in the literature.
+\begin{enumerate}
+    \item Entries $\Phi_{i, j}$ of $\Phi$ are independent samples from Normal distribution $$
+    \{\Phi_{i, j}\}_{i \in [n], j \in [N]} \stackrel{i.i.d}{\sim} \mathcal{N}(0, \frac{1}{n}).
+    $$
+    Here the samples from normal distribution might be very large and working with them in practice arise a difficulties. The next example is bounded and do not have such a problem.
+    \item Entries $\Phi_{i, j}$ of $\Phi$ are independent samples from following distribution 
+    $$
+    X :=\begin{cases}
+         +1/\sqrt{n} & \text{with probability } 1/2, \\
+         -1/\sqrt{n} & \text{with probability } 1/2.
+    \end{cases}
+    $$
+    
+    Here samples are either $+1/\sqrt{n}$ or $-1/\sqrt{n}$ and they are bounded, however, in practice we prefer to have sparse matrices that working with them will be fast. The next example is a nice result for sparse case.
+    \item Entries $\Phi_{i, j}$ of $\Phi$ are independent samples from following distribution 
+    $$
+    X :=\begin{cases}
+         +\sqrt{3}/\sqrt{n} & \text{with probability } 1/6, \\
+         0 & \text{with probability } 2/3, \\
+         -\sqrt{3}/\sqrt{n} & \text{with probability } 1/6.
+    \end{cases}
+    $$
+\end{enumerate}
+In all the above examples the constant $c(\epsilon)$ can be chosen as $\epsilon^2/4 - \epsilon^3/6$. \\
+
+In order to derive the first connection of JL Lemma and RIP let's restate the results and replicate the proves in \citep{isometry}. As a reminder $X_T$ is a linear subspace in $\mathbb{R}^N$ such that vectors have zero entries outside of index set $T$. \\
+
+\noindent
+{\bf Lemma 5} (Lemma 5.1 in \citep{isometry}) \\
+{\it 
+Let $n, N \in \mathbb{N}$ and $\Phi \in \mathbb{R}^{n \by N}$ be a random matrix which satisfies concentration inequality (see Definition 2). Then, for an arbitrary set $T$
+such that $k := \#T < n$ and $\forall \delta \in (0, 1)$, we have 
+\begin{equation}
+\label{eqn:iso1}    
+(1 - \delta) \norm{x}_2 \leq \norm{\Phi(x)}_2 \leq (1 + \delta) \norm{x}_2, \quad \forall x \in X_T,
+\end{equation}
+with probability 
+\begin{equation}
+   \geq 1 - 2(12/\delta)^k e^{-c(\delta/2)n}.
+\end{equation}
+}
+
+\noindent
+{\bf Proof}. First we note that in case $x$ is zero the equation \ref{eqn:iso1} is trivially satisfied. In other cases we have it is equivalent to 
+$$
+(1 - \delta) \leq \norm{\Phi(x/\norm{x}_2)}_2 \leq (1 + \delta) , \quad \forall x \in X_T,
+$$
+where the linearity of norm and $\Phi$ is used. Thus, equation \ref{eqn:iso1} is equivalent to 
+\begin{equation}
+\label{eqn:iso2}
+(1 - \delta) \leq \norm{\Phi(x)}_2 \leq (1 + \delta) , \quad \forall x \in X_T, \norm{x}_2 = 1.
+\end{equation}
+As we are in a finite dimension, the unit ball of $X_T$ is possible to cover having only finite number of balls of radius no more than $\delta/4$. The same logic works for covering the unit sphere of $X_T$ by balls which have radius no more than $\delta/4$ and their centers are in $X_T$. So, there is finite set of points $\mathcal{Q}_T \subseteq X_T$ such that $\norm{q}_2 = 1,$ $\forall q \in \mathcal{Q}_T$ and $\forall x \in X_T$ with $\norm{x}_2 = 1$ we have 
+\begin{equation}
+\label{eqn:iso_cover}
+    min_{q \in \mathcal{Q}_T} \norm{x-q}_2 \leq \delta/4.
+\end{equation}
+Moreover, it is known that such points is possible to choose such that $\# \mathcal{Q}_T \leq (12/\delta)^k$. Now, using the concentration inequality for the case of $\epsilon = \delta/2$ and the union bound of probability we obtain
+$$
+(1 - \delta/2) \norm{q}_2^2 \leq \norm{\Phi(q)}_2^2 \leq (1 + \delta/2) \norm{x}_2^2, \quad \forall q \in \mathcal{Q}_T,
+$$
+with probability
+$$
+   \geq 1 - 2(12/\delta)^k e^{-c(\delta/2)n},
+$$
+which is the same as
+$$
+(1 - \delta/2) \norm{q}_2 \leq \norm{\Phi(q)}_2 \leq (1 + \delta/2) \norm{q}_2, \quad \forall q \in \mathcal{Q}_T,
+$$
+with probability
+$$
+   \geq 1 - 2(12/\delta)^k e^{-c(\delta/2)n}.
+$$ 
+Let's denote 
+$$
+    A := 
+    argmin_{a} \{a \in \mathbb{R} : \norm{\Phi(x)}_2 \leq (1 + a), \quad \forall x \in X_T, \norm{x}_2 = 1 \}
+$$
+From (\ref{eqn:iso_cover}) we have for every above $x$ there is $q \in \mathcal{Q}_T$ with $\norm{q}_2 = 1$ and $\norm{x-q}_2 \leq \delta/4$. Using this we obtain
+$$
+\norm{\Phi(x)}_2 \leq \norm{\Phi(q)}_2 + \norm{\Phi(x - q)}_2 \leq 1 + \delta/2 + (1 + A)\delta/4,
+$$
+where we used the fact that $\norm{\Phi(q)}_2 \leq 1 + \delta/2$ from above and $\norm{\Phi(x - q)}_2 \leq (1 + A)\norm{x-q}_2 \leq (1 + A)\delta/4$ by definition of $A$. Having this and using the definition of $A$ as being the smallest we have $A \leq \delta/2 + (1 + A)\delta/4 \iff A(1 - \delta/4) \leq 3\delta/4 \iff A \leq 3\delta/{4(1-\delta/4)} = 3\delta/{(4-\delta)} \leq \delta$. We obtained that $A \leq \delta$ which means right hand side of the (\ref{eqn:iso2}) is satisfied. For the left hand side we have 
+$$
+\norm{\Phi(x)}_2 \geq \norm{\Phi(q)}_2 - \norm{\Phi(x - q)}_2 \geq 1 - \delta/2 - (1 + \delta)\delta/4 \geq 1 - \delta/2 - \delta/4 -\delta^2/4 \geq 1 - \delta,
+$$
+where we have used the fact that $\norm{\Phi(q)}_2 \geq 1 - \delta/2$ and $A \leq \delta$ from above. Therefore, equation \ref{eqn:iso2} is established with probability $\geq 1 - 2(12/\delta)^k e^{-c(\delta/2)n} $ which completes the proof of the lemma.
+
+\hfill\BlackBox
+
+The following Theorem shows that JL Lemma implies Restricted Isometry Property in a sense that if concentration inequality holds (which means JL Lemma holds) then RIP holds. For the Definition of RIP see section 2. \\
+
+\noindent
+{\bf Theorem 6} (Theorem 5.2 in \citep{isometry}) \\
+{\it
+Let $n, N \in \mathbb{N}, \delta \in (0, 1)$ and $\Phi \in \mathbb{R}^{n \by N}$ be a random matrix which satisfies concentration inequality (see Definition 2), then $\exists c_1, c_2 > 0$ depending only on $\delta$ such that $\Phi$ satisfies Restricted Isometry Property of order $k \leq c_1n/log(N/k)$ and level $\delta$ with probability $ \geq 1 - 2e^{-c_2n}$.
+}
+
+\noindent
+{\bf Proof}. For each index set $T$ with $\#T = k$ Lemma 5 proves that the matrix $\Phi$ fails to satisfy (\ref{eqn:iso1}) for the space $X_T$ with probability
+$$
+ \leq 2(12/\delta)^k e^{-c(\delta/2)n}.
+$$
+The number of such spaces is $\binom{N}{k}$. Using the union bound we obtain that (\ref{eqn:iso1}) fails with probability
+
+\begin{equation}
+\label{eqn:iso3}
+    \leq \binom{N}{k}2(12/\delta)^k e^{-c(\delta/2)n} \leq (eN/k)^k 2(12/\delta)^k e^{-c(\delta/2)n} 
+    = 2e^{-c(\delta/2)n + k[log(eN/k) + log(12/\delta)]}
+\end{equation}
+where $\binom{N}{k} \leq (eN/k)^k$ inequality is used. Now, let's fix $c_1 > 0$ and taking $c_2 \leq c(\delta/2) - c_1[1 + (1 + log(12/\delta))/log(N/k)]$ gives the exponent of the right side in (\ref{eqn:iso3}) 
+\begin{align*}
+-c(\delta/2)n + k[log(eN/k) + log(12/\delta)] \leq \\
+-c(\delta/2)n + c_1n/log(N/k)[log(eN/k) + log(12/\delta)] =  \\
+n[-c(\delta/2) + c_1(1 + (1 + log(12/\delta))/log(N/k))] \leq -c_2n,
+\end{align*}
+where $k \leq c_1n/log(N/k)$ is used.
+Taking $c_1$ sufficiently small ensures that $c_2$ is positive. This proves that matrix $\Phi$ satisfies the  following inequalities for every $k$-sparse vector $x$, as spaces $X_T$ are the once that characterize all the sparse vectors
+$$
+(1 - \delta) \norm{x}_2 \leq \norm{\Phi(x)}_2 \leq (1 + \delta) \norm{x}_2,
+$$
+with probability
+$$
+ \geq 1 - 2e^{-c_2n},
+$$
+This concludes the proof of the Theorem.
+
+\hfill\BlackBox
+
+Having the one implication it is interesting to think about the other direction. However, matrices that satisfy RIP are not random; so, in order to derive converse result the RIP matrix should be randomized in a natural way. In fact, the reverse implication holds by specific randomization of RIP matrices. Before stating the main reverse result some preliminary Propositions are necessary. 
+
+The following Proposition is well known Hoeffding's inequality which is a tail bound. \\
+
+\noindent
+{\bf Proposition 7} (Hoeffding's Inequality) (Proposition 5.1 in \citep{Khramer}) \\
+{\it Let $N \in \mathbb{N}$ and $x \in \mathbb{R}^N$. Taking $\xi = (\xi_1, \xi_2, \dots, \xi_N)$ as a Rademacher sequence, then, for any $t > 0$ we have 
+\begin{equation}
+    \label{eqn:hoeffding}
+    \mathbb{P}(|\sum_{j=1}^N \xi_j x_j| > t) \leq 2e^{-\frac{t^2}{2\norm{x}_2^2}}.
+\end{equation}
+}
+
+\noindent
+{\bf Proposition 8} (Proposition 5.2 in \citep{Khramer}) \\
+{\it Let $N \in \mathbb{N}$ and $X \in \mathbb{R}^N$ is a matrix such that $X_{i, i} = 0$ for all $i \in [N]$. Taking $\xi = (\xi_1, \xi_2, \dots, \xi_N)$ as a Rademacher sequence, then, for any $t > 0$ we have 
+\begin{equation}
+    \label{eqn:rademacher_chaos_tail}
+    \mathbb{P}(|\sum_{i,j=1}^N \xi_i \xi_j X_{i, j}| > t) \leq 2e^{-\frac{1}{64}min(\frac{96t/65}{\norm{X}}, \frac{t^2}{\norm{X}_{\mathcal{F}}^2})}
+\end{equation}
+}
+
+The following is an estimate for RIP matrices. \\
+
+\noindent
+{\bf Proposition 9} (Proposition 5.3 in \citep{Khramer}) \\
+{\it Let $n, N \in \mathbb{N}$ and the matrix $\Phi \in \mathbb{R}^{n \by N}$ satisfies RIP of order $2s$ and level $\delta$, where $\delta \in (0, 1)$ and $2s \leq N$. Then for any two disjoint subsets $J, L \subset [N]$ of size $\#J, \#L \leq s$ we have 
+\begin{equation}
+    \label{eqn:iso_bound}
+    \norm{|\Phi_{(J)}^* \Phi_{(L)}} \leq \delta.
+\end{equation}
+}
+
+\noindent
+{\bf Proposition 10} (Proposition 5.4 in \citep{Khramer}) \\
+{\it Let $n, N \in \mathbb{N}$ and $s \leq N/2$, $R = \ceil{N/s}$. Suppose $\Phi = (\Phi_{(1)}, \Phi_{(2)}, \dots, \Phi_{(R)}) = (\Phi_{(1)}, \Phi_{(-1)}) \in \mathbb{R}^{n \by N}$ satisfies $(2s, \delta)-RIP$ and $x = (x_{(1)}, x_{(2)}, \dots, x_{(R)}) = (x_{(1)}, x_{(-1)}) \in \mathbb{R}^N$ be in a unit ball (i.e., $\norm{x}_2 \leq 1$) and in decreasing arrangement. Consider a symmetric matrix
+$$
+ C \in \mathbb{R}^{N \by N}, \quad C_{i,j} =
+ \begin{cases} 
+ x_j \Phi_j^*\Phi_l x_l & if \quad j \not \sim l, j,l > s, \\
+ 0 & otherwise
+ \end{cases}
+$$
+and , for $b \in \{-1, 1\}^s$, the vector
+$$
+v \in \mathbb{R}^{N-s}, \quad v = D_{x_{(-1)}} \Phi_{(-1)}^* \Phi_{(1)} D_{x_{(1)}} b.
+$$
+Then, the following inequalities hold
+$$
+\norm{C} \leq \frac{\delta}{s}, \quad \norm{C}_{\mathcal{F}} \leq \frac{\delta}{\sqrt{s}}, \quad \norm{v}_2 \leq \frac{\delta}{\sqrt{s}}.
+$$
+}
+
+For the proofs of the above Propositions please refer to \citep{Khramer}. \\
+
+Having all the above mentioned preliminary results enables us to restate and replicate the proof of the second main results from \citep{Khramer}. This time results are another direction: Restricted Isometry Property implies concentration inequality which implies JL Lemma. So, RIP implies Johnson-Lindenstrauss Lemma. \\
+
+\noindent
+{\bf Theorem 11} (Theorem 3.1 in \citep{Khramer}) \\
+{\it
+Let $\eta > 0, \epsilon \in (0, 1), n, N \in \mathbb{N}$ be given and the set $E \subset \mathbb{R}^N$ has cardinality $p := \#E$. Suppose the matrix $\Phi \in \mathbb{R}^{n \by N}$ satisfies Restricted Isometry Property of order $k \geq 40log\frac{4p}{\eta}$ and level $\delta \leq \frac{\epsilon}{4}$. Taking $\xi \in \mathbb{R}^N$ as a Rademacher sequence we have 
+\begin{equation}
+    \label{eqn:iso_jl1}
+    (1 - \epsilon) \norm{x}_2^2 \leq \norm{\Phi D_{\xi}x}_2^2 \leq (1 + \epsilon) \norm{x}_2^2,
+\end{equation}
+for all $x \in E$, with probability
+$$
+ \geq 1- \eta.
+$$
+}
+
+\noindent
+{\bf Proof}. Since (\ref{eqn:iso_jl1}) is equivalent to 
+\begin{equation}
+    \label{eqn:iso_jl2}
+    (1 - \epsilon) \leq \norm{\Phi D_{\xi}x/ \norm{x}_2}_2^2 \leq (1 + \epsilon),
+\end{equation}
+without loss of generality we assume that $ \norm{x}_2 = 1$ and the above equation becomes
+\begin{equation}
+    \label{eqn:iso_jl3}
+    (1 - \epsilon) \leq \norm{\Phi D_{\xi}x}_2^2 \leq (1 + \epsilon).
+\end{equation}
+First, notice that rearranging the columns of $\Phi$ and doing the appropriate permutation in $x$ does not affect the result as RIP of the matrix $\Phi$ is invariant under permutation. So, we can assume that every $x \in E$ has norm 1 and is in decreasing arrangement. Moreover, simple matrix vector multiplication shows that $D_\xi x = D_x \xi$. Now. let us fix $x\ in E$ with $\norm{x}_2 = 1$ and further assume that $k = 2s$ is even. Then, the quantity that we want to estimate becomes
+
+\begin{equation}
+    \label{eqn:iso_jl4}
+    \begin{split}
+    \norm{\Phi D_{\xi}x}_2^2 & = \norm{\Phi D_{x}\xi}_2^2 \\
+    & = \sum_{J=1}^R \norm{\Phi_{(J)} D_{(x_{(J)})} \xi_{(J)}}_2^2 \\
+    & + 2 \xi_{(1)}^* D_{x_{(1)}} \Phi_{(1)}^* \Phi_{(-1)} D_{x_{(-1)}} \xi_{(-1)} \\
+    & + \sum_{J,L = 2, J \not = L }^R \langle \Phi_{(J)} D_{x_{(J)}} \xi_{(J)}, \Phi_{(L)} D_{x_{(L)}} \xi_{(L)} \rangle.
+    \end{split}
+\end{equation}
+
+In the following we will get bounds for each of the three terms in (\ref{eqn:iso_jl4}).
+
+\begin{enumerate}
+    \item $ \sum_{J=1}^R \norm{\Phi_{(J)} D_{(x_{(J)})} \xi_{(J)}}_2^2$: Since having a RIP of order $k \geq s$ and level $\delta$ means also having a RIP of order $s$ and level $\delta$ and each $\Phi_{(J)}$ for all $J = 1, 2, \dots, R$ is almost an isometry in a sense of (\ref{eqn:rip}). Keeping in mind that elements of $\xi$ are from Rademacher sequence i.e., +1 or -1, we have $ \norm{D_{x_{(J)}} \xi_{(J)}}_2 = \norm{x_{(J)}}_2$ and using the definition of RIP of order $s$ and level $\delta$ we obtain
+    $$
+    (1 - \delta) \norm{x}_2^2 \leq \sum_{J=1}^R \norm{\Phi_{(J)} D_{x_{(J)}} \xi_{(J)}}_2^2 \leq (1 + \delta) \norm{x}_2^2.
+    $$
+    Using the assumption of the Theorem that $\delta \leq \epsilon/4$, we have
+    \begin{equation}
+    \label{eqn:iso_jl5}
+    (1 - \epsilon/4) \norm{x}_2^2 \leq \sum_{J=1}^R \norm{\Phi_{(J)} D_{x_{(J)}} \xi_{(J)}}_2^2 \leq (1 + \epsilon/4) \norm{x}_2^2.
+    \end{equation}
+    
+    \item $2 \xi_{(1)}^* D_{x_{(1)}} \Phi_{(1)}^* \Phi_{(-1)} D_{x_{(-1)}} \xi_{(-1)}$: For every fixed $b := \xi_{(1)}$ consider a random variable
+    $$
+    X := b^*D_{x_{(1)}} \Phi_{(1)}^* \Phi_{(-1)} D_{x_{(-1)}} \xi_{(-1)} = \langle v, \xi_{(-1)} \rangle,
+    $$
+    where $v := D_{x_{(-1)}} \Phi_{(-1)}^* \Phi_{(1)} D_{x_{(1)}} b$ as in Proposition 10. Using the Hoeffding's inequality (Proposition 7) and the Proposition 10 we obtain
+    \begin{equation}
+        \label{eqn:iso_jl6}
+        \mathbb{P}(|X| \geq \gamma \epsilon) \leq 2 e^{-\frac{\gamma^2 \epsilon^2}{2 \norm{v}_2^2}} \leq 2e^{-\frac{\gamma^2 \epsilon^2}{2 \delta^2/s}} = 2e^{-\frac{s \gamma^2 \epsilon^2}{2 \delta^2} }
+    \end{equation}
+    Each $X$ depends on the choice of $x \in E$. Using a union bound and the a little bit abuse of notation we obtain
+    $$
+    \mathbb{P}(\exists x \in E: |X| \geq \gamma \epsilon) \leq 
+    2pe^{-\frac{s \gamma^2 \epsilon^2}{2 \delta^2} } = 
+    e^{ \log{2p} -\frac{s \gamma^2 \epsilon^2}{2 \delta^2} }.
+    $$
+    Let us choose $\gamma$ such that 
+    $$
+    \delta \leq \frac{\epsilon}{4}\sqrt{\frac{8 \gamma^2 s}{\log(4p/\eta)}},
+    $$
+    which holds for the case of $\gamma = 0.1$ and from the Theorem assumption we had $\delta \leq \epsilon/4$ and $s = k/2 \geq 20\log(4p/\eta)$. This shows that the probability in (\ref{eqn:iso_jl6}) is no more than $\eta/2$. Putting everything together we obtain
+    \begin{equation}
+        \label{eqn:iso_jl7}
+        \mathbb{P}(\exists x \in E: |2X| \geq 0.2 \epsilon) \leq \frac{\eta}{2}
+    \end{equation}
+    \item $\sum_{J,L = 2, J \not = L }^R \langle \Phi_{(J)} D_{x_{(J)}} \xi_{(J)}, \Phi_{(L)} D_{x_{(L)}} \xi_{(L)} \rangle$: The aim here is to use Proposition 8 and Proposition 10 to obtain bounds. Denoting
+    $$
+    C \in \mathbb{R}^{N \by N}, \quad C_{i,j} =
+    \begin{cases} 
+    x_j \Phi_j^*\Phi_l x_l & if \quad j \not \sim l, j,l > s, \\
+    0 & otherwise
+    \end{cases}
+    $$
+    as in Proposition 10, we get
+    $$
+    \sum_{J,L = 2, J \not = L }^R \langle \Phi_{(J)} D_{x_{(J)}} \xi_{(J)}, \Phi_{(L)} D_{x_{(L)}} \xi_{(L)} \rangle = 
+    \langle \xi, C \xi \rangle = 
+    \sum_{j,l = s+1}^N \xi_j \xi_l C_{jl}.
+    $$
+    Note, this equality holds since in matrix $C$ entries are zero where $\xi_j$ and $\xi_j$ does not appear together. From Proposition 10 we have $\norm{C} \leq \frac{\delta}{s}$ and $\norm{C}_{\mathcal{F}} \leq \frac{\delta}{\sqrt{s}}$. Fixing $\tau > 0$ and applying above inequalities in the Proposition 8 we obtain
+    $$
+    \mathbb{P}(| \sum_{j,l = s+1}^N \xi_j \xi_l C_{jl}| \geq \tau \epsilon) \leq
+    2e^{-\frac{1}{64}min(\frac{96 \tau \epsilon/65}{\norm{C}}, \frac{(\tau \epsilon)^2}{\norm{C}_{\mathcal{F}}^2})} \leq
+    2e^{-\frac{1}{64}min(\frac{96 \tau \epsilon s}{65 \delta}, \frac{\tau^2 \epsilon^2 s}{\delta ^2})}
+    $$
+    Using the union bound, we get
+    $$
+    \mathbb{P}(\exists x \in E: | \sum_{j,l = s+1}^N \xi_j \xi_l C_{jl}| \geq \tau \epsilon) \leq
+    e^{\log{2p}-\frac{s}{64}min(\frac{96 \tau \epsilon }{65 \delta}, \frac{\tau^2 \epsilon^2}{\delta ^2})}.
+    $$
+    Let us take $\tau$ such that 
+    $$
+    \delta \leq \frac{\epsilon}{4} min(\sqrt{\frac{\tau^2 s}{4 \log(4p/\eta)}}, \frac{96\tau s/65}{16 \log(4p/\eta)}),
+    $$
+    which is true if we take $\tau = 0.55$ and using the assumptions of the Theorem that $\delta \leq \epsilon/4$ and $s = k/2 \geq 20 \log(4p/\eta)$. Above inequality is equivalent to
+    $$
+    \log{2p}-\frac{s}{64}min(\frac{96 \tau \epsilon }{65 \delta}, \frac{\tau^2 \epsilon^2}{\delta ^2}) \leq \log{\eta/2}.
+    $$
+    
+    Putting everything together we obtain
+    \begin{equation}
+        \mathbb{P}(\exists x \in E: | \sum_{j,l = s+1}^N \xi_j \xi_l C_{jl}| \geq \tau \epsilon) \leq \eta/2
+    \end{equation}
+    So,
+    \begin{equation}
+        \label{eqn:iso_jl8}
+        \mathbb{P}(\exists x \in E: |\sum_{J,L = 2, J \not = L }^R \langle \Phi_{(J)} D_{x_{(J)}} \xi_{(J)}, \Phi_{(L)} D_{x_{(L)}} \xi_{(L)} \rangle| \geq 0.55 \epsilon) \leq \eta/2
+    \end{equation}
+\end{enumerate}
+Now, using (\ref{eqn:iso_jl5}), (\ref{eqn:iso_jl7}), (\ref{eqn:iso_jl8}) and (\ref{eqn:iso_jl4}) and remembering that we can assume that norm of $x$ is 1,  we obtain
+\begin{equation*}
+   \begin{split}
+      & \mathbb{P}(\exists x \in E: |\norm{\Phi D_{\xi}x}_2^2/\norm{x}_2^2 - 1| \geq  \epsilon) \\
+       & \leq 
+       \mathbb{P}(\exists x \in E: |\sum_{J=1}^R \norm{\Phi_{(J)} D_{(x_{(J)})} \xi_{(J)}}_2^2 \\
+     & + 2 \xi_{(1)}^* D_{x_{(1)}} \Phi_{(1)}^* \Phi_{(-1)} D_{x_{(-1)}} \xi_{(-1)} \\
+    & + \sum_{J,L = 2, J \not = L }^R \langle \Phi_{(J)} D_{x_{(J)}} \xi_{(J)}, \Phi_{(L)} D_{x_{(L)}} \xi_{(L)} \rangle| \geq \epsilon) \\
+   & \leq 
+     \mathbb{P}(\exists x \in E: |\sum_{J=1}^R \norm{\Phi_{(J)} D_{(x_{(J)})} \xi_{(J)}}_2^2 - 1 | \geq 0.25 \epsilon) \\
+    & + \mathbb{P}(\exists x \in E: |2 \xi_{(1)}^* D_{x_{(1)}} \Phi_{(1)}^* \Phi_{(-1)} D_{x_{(-1)}} \xi_{(-1)}| \geq 0.2 \epsilon) \\
+    & + \mathbb{P}(\exists x \in E: |\sum_{J,L = 2, J \not = L }^R \langle \Phi_{(J)} D_{x_{(J)}} \xi_{(J)}, \Phi_{(L)} D_{x_{(L)}} \xi_{(L)} \rangle| \geq 0.55 \epsilon) \\
+    & \leq 0 + \eta/2 + \eta/2 = \eta.
+   \end{split} 
+\end{equation*}
+This concludes the proof of the Theorem.
+
+\hfill\BlackBox
+
+The above methods also provides a way to prove the direct inverse of the Theorem 6 which is explored in the next Proposition. This means If we randomize the RIP matrix it becomes equivalent to JL Lemma which is a remarkable result as they are two different properties while being equivalent. \\
+
+\noindent
+{\bf Proposition 12} (Proposition 3.2 in \citep{Khramer}) \\
+{\it
+Let $n, N \in \mathbb{N}$ and $\delta > 0, \epsilon \in (0, 1)$ is fixed. Suppose that there is a constant $c_1$ such that for all pairs $(k, n)$ that satisfy $k \leq c_1 \delta^2 n/\log{(N/k)}$, $\Phi = \Phi(n) \in \mathbb{R}^{n \by N}$ has RIP of order $k$ and level $\delta \leq \epsilon/4$. Fixing $x \in \mathbb{R}^N$ and letting $\xi \in \mathbb{R}^N$ be a Rademacher sequence, then, there exist a constant $c_2$ such that for all $n, \Phi D_{\xi}$ satisfies the concentration inequality for $c(\epsilon) = c_2 \epsilon^2 \log^{-1}{\frac{N}{k}}$, for any $k$ that satisfies the above inequality.
+}
+
+\noindent
+{\bf Proof}. We can assume that $k \geq \frac{1}{2} c_1 \delta^2/\log{(N/k)}$, otherwise we just increase $k$ until it obtains the above bound. Using the inequaliies in the proof of Theorem 11 from points 1,2 and 3 and remembering that $\tau = 0.55$ and $\gamma = 0.1$ we obtain 
+$$
+\mathbb{P}(|\norm{\Phi D_{\xi} x}_2^2 - \norm{x}_2^2| \geq \epsilon \norm{x}_2^2) \leq 2 e^{-c_3k} \leq 2e^{-c_2 \epsilon^2 n \log^{-1}{(\frac{N}{k})}} = 2e^{-n c(\epsilon)},
+$$
+where $c_2 = c_3c_1/32$.
+\hfill\BlackBox
+
+\newpage
+
+
+\vskip 0.2in
+\bibliography{sample}
+
+\end{document}
